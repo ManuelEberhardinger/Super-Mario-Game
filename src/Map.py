@@ -146,9 +146,8 @@ class Map(object):
             self.other_players = []
             self.actions_sequence = [[]]
         else:
-            num_players = len(self.other_players)
-            for _ in range(num_players):
-                self.other_players.append(Player(x_pos=self.new_x_pos, y_pos=351))
+            for p in self.other_players:
+                p.reset(False)
             self.other_players.append(Player(x_pos=self.new_x_pos, y_pos=351))
             self.copied_actions = deepcopy(self.actions_sequence)
             self.actions_sequence.append([])
