@@ -49,16 +49,22 @@ class Goombas(Entity):
             core.get_map().get_mobs().remove(self)
 
     def check_collision_with_player(self, core):
+        players = core.get_map().get_other_players()
         if self.collision:
-            if self.rect.colliderect(core.get_map().get_player().rect):
-                if self.state != -1:
-                    if core.get_map().get_player().y_vel > 0:
-                        self.die(core, instantly=False, crushed=True)
-                        core.get_map().get_player().reset_jump()
-                        core.get_map().get_player().jump_on_mob()
-                    else:
-                        if not core.get_map().get_player().unkillable:
-                            core.get_map().get_player().set_powerlvl(0, core)
+            self.check_collision_helper(core, core.get_map().get_player())
+            for p in players:
+                self.check_collision_helper(core, p)
+
+    def check_collision_helper(self, core, p):
+        if self.rect.colliderect(p.rect):
+            if self.state != -1:
+                if p.y_vel > 0:
+                    self.die(core, instantly=False, crushed=True)
+                    p.reset_jump()
+                    p.jump_on_mob()
+                else:
+                    if not p.unkillable:
+                        p.set_powerlvl(0, core)
 
     def update_image(self):
         self.image_tick += 1

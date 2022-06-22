@@ -146,11 +146,12 @@ class Map(object):
             self.other_players = []
             self.actions_sequence = [[]]
         else:
+            num_players = len(self.other_players)
+            for _ in range(num_players):
+                self.other_players.append(Player(x_pos=self.new_x_pos, y_pos=351))
             self.other_players.append(Player(x_pos=self.new_x_pos, y_pos=351))
+            self.copied_actions = deepcopy(self.actions_sequence)
             self.actions_sequence.append([])
-
-        self.copied_actions = deepcopy(self.actions_sequence)
-
         self.tick = 0
         self.time = 400
 
@@ -169,6 +170,9 @@ class Map(object):
 
     def get_player(self):
         return self.oPlayer
+
+    def get_other_players(self):
+        return self.other_players
 
     def get_camera(self):
         return self.oCamera
@@ -284,7 +288,8 @@ class Map(object):
 
     def update_old_players(self, core):
         for i, p in enumerate(self.other_players):
-            p.update_with_actions(core, *self.copied_actions[i].pop(0))
+            if i < len(self.copied_actions) and len(self.copied_actions[i]) > 0:
+                p.update_with_actions(core, *self.copied_actions[i].pop(0))
 
     def update_entities(self, core):
         for mob in self.mobs:
@@ -308,7 +313,7 @@ class Map(object):
             if self.time == 100 and self.tick == 1:
                 core.get_sound().start_fast_music(core)
             elif self.time == 0:
-                self.player_death(core)
+                self.player_death(core, self.get_player())
 
     def update_score_time(self):
         """
@@ -352,16 +357,16 @@ class Map(object):
             self.spawn_goombas(4240, 352, False)
             self.is_mob_spawned[1] = True
 
-    def player_death(self, core):
+    def player_death(self, core, player):
         self.in_event = True
-        self.get_player().reset_jump()
-        self.get_player().reset_move()
-        self.get_player().numOfLives -= 1
+        player.reset_jump()
+        player.reset_move()
+        player.numOfLives -= 1
 
-        if self.get_player().numOfLives == 0:
-            self.get_event().start_kill(core, game_over=True)
-        else:
-            self.get_event().start_kill(core, game_over=False)
+        if self.get_player().numOfLives == 0 and player == self.get_player():
+            self.get_event().start_kill(core, player, game_over=True)
+        elif player == self.get_player():
+            self.get_event().start_kill(core, player, game_over=False)
 
     def player_win(self, core):
         self.in_event = True
@@ -392,7 +397,9 @@ class Map(object):
             self.update_old_players(core)
 
         else:
-            self.get_event().update(core)
+            self.get_event().update(core, self.get_player())
+            # for p in self.other_players:
+            #    self.get_event().update(core, p)
 
         # Debris is 1) Particles which appears when player destroy a brick block
         # 2) Coins which appears when player activate a "question" platform

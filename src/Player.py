@@ -234,7 +234,7 @@ class Player(object):
 
         # Map border check
         if self.rect.y > 448:
-            core.get_map().player_death(core)
+            core.get_map().player_death(core, self)
 
         # End Flag collision check
         if self.rect.colliderect(core.get_map().flag.pillar_rect):
@@ -393,7 +393,7 @@ class Player(object):
 
     def set_powerlvl(self, power_lvl, core):
         if self.powerLVL == 0 == power_lvl and not self.unkillable:
-            core.get_map().player_death(core)
+            core.get_map().player_death(core, self)
             self.inLevelUpAnimation = False
             self.inLevelDownAnimation = False
 

@@ -33,7 +33,7 @@ class Event(object):
         self.tick = 0
         self.score_tick = 0
 
-    def start_kill(self, core, game_over):
+    def start_kill(self, core, player, game_over):
         """
 
         Player gets killed.
@@ -50,7 +50,7 @@ class Event(object):
         core.get_sound().play('death', 0, 0.5)
 
         # Sets "dead" sprite
-        core.get_map().get_player().set_image(len(core.get_map().get_player().sprites))
+        player.set_image(len(player.sprites))
 
     def start_win(self, core):
         """
@@ -81,17 +81,17 @@ class Event(object):
             core.get_map().get_player().add_score(1000)
             core.get_map().spawn_score_text(core.get_map().get_player().rect.x + 16, core.get_map().get_player().rect.y, score=1000)
 
-    def update(self, core):
+    def update(self, core, player):
 
         # Death
         if self.type == 0:
             self.y_vel += GRAVITY * FALL_MULTIPLIER if self.y_vel < 6 else 0
-            core.get_map().get_player().rect.y += self.y_vel
+            player.rect.y += self.y_vel
 
             if pg.time.get_ticks() > self.time + self.delay:
                 if not self.game_over:
-                    core.get_map().get_player().reset_move()
-                    core.get_map().get_player().reset_jump()
+                    player.reset_move()
+                    player.reset_jump()
                     core.get_map().reset(False)
                     core.get_sound().play('overworld', 9999999, 0.5)
                 else:
