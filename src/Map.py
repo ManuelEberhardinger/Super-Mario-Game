@@ -1,6 +1,6 @@
 import pygame as pg
 from pytmx.util_pygame import load_pygame
-
+from copy import deepcopy
 from GameUI import GameUI
 from BGObject import BGObject
 from Camera import Camera
@@ -53,8 +53,11 @@ class Map(object):
         self.in_event = False
         self.tick = 0
         self.time = 400
+        self.new_x_pos = 128
 
-        self.oPlayer = Player(x_pos=128, y_pos=351)
+        self.oPlayer = Player(x_pos=self.new_x_pos, y_pos=351)
+        self.other_players = []
+        self.actions_sequence = [[]]
         self.oCamera = Camera(self.mapSize[0] * 32, 14)
         self.oEvent = Event()
         self.oGameUI = GameUI()
@@ -138,6 +141,15 @@ class Map(object):
         self.flag = None
         self.sky = None
         self.map = None
+        #self.new_x_pos += 32
+        if reset_all:
+            self.other_players = []
+            self.actions_sequence = [[]]
+        else:
+            self.other_players.append(Player(x_pos=self.new_x_pos, y_pos=351))
+            self.actions_sequence.append([])
+
+        self.copied_actions = deepcopy(self.actions_sequence)
 
         self.tick = 0
         self.time = 400
@@ -148,6 +160,7 @@ class Map(object):
 
         self.get_event().reset()
         self.get_player().reset(reset_all)
+
         self.get_camera().reset()
 
     def get_name(self):
@@ -208,7 +221,7 @@ class Map(object):
 
         # Adding tube's collision just by spawning tiles inside the tube.
         # They will not render because we are adding them to "collision" list.
-        for y in range(y_coord, 12): # 12 because it's ground level.
+        for y in range(y_coord, 12):  # 12 because it's ground level.
             for x in range(x_coord, x_coord + 2):
                 self.map[x][y] = Platform(x * 32, y * 32, image=None, type_id=0)
 
@@ -268,6 +281,10 @@ class Map(object):
 
     def update_player(self, core):
         self.get_player().update(core)
+
+    def update_old_players(self, core):
+        for i, p in enumerate(self.other_players):
+            p.update_with_actions(core, *self.copied_actions[i].pop(0))
 
     def update_entities(self, core):
         for mob in self.mobs:
@@ -372,6 +389,8 @@ class Map(object):
             else:
                 self.update_player(core)
 
+            self.update_old_players(core)
+
         else:
             self.get_event().update(core)
 
@@ -445,4 +464,10 @@ class Map(object):
 
         self.get_player().render(core)
 
+        for p in self.other_players:
+            p.render(core)
+
         self.get_ui().render(core)
+
+    def store_action_sequence(self, keyR, keyL, keyD, keyU, keyShift):
+        self.actions_sequence[-1].append((keyR, keyL, keyD, keyU, keyShift))

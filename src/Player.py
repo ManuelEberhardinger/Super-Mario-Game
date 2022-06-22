@@ -29,7 +29,7 @@ class Player(object):
         self.direction = True
         self.on_ground = False
         self.fast_moving = False
-        
+
         self.pos_x = x_pos
 
         self.image = pg.image.load('images/mario/mario.png').convert_alpha()
@@ -131,20 +131,26 @@ class Player(object):
         self.sprites.append(pg.image.load('images/Mario/mario_death.png').convert_alpha())
 
     def update(self, core):
-        self.player_physics(core)
-        self.update_image(core)
+        keyR, keyL, keyD, keyU, keyShift = core.keyR, core.keyL, core.keyD, core.keyU, core.keyShift
+        self.player_physics(core, keyR, keyL, keyD, keyU, keyShift)
+        self.update_image(core, keyR, keyL, keyD, keyU, keyShift)
         self.update_unkillable_time()
 
-    def player_physics(self, core):
-        if core.keyR:
+    def update_with_actions(self, core, keyR, keyL, keyD, keyU, keyShift):
+        self.player_physics(core, keyR, keyL, keyD, keyU, keyShift)
+        self.update_image(core, keyR, keyL, keyD, keyU, keyShift)
+        self.update_unkillable_time()
+
+    def player_physics(self, core,  keyR, keyL, keyD, keyU, keyShift):
+        if keyR:
             self.x_vel += SPEED_INCREASE_RATE
             self.direction = True
-        if core.keyL:
+        if keyL:
             self.x_vel -= SPEED_INCREASE_RATE
             self.direction = False
-        if not core.keyU:
+        if not keyU:
             self.already_jumped = False
-        elif core.keyU:
+        elif keyU:
             if self.on_ground and not self.already_jumped:
                 self.y_vel = -JUMP_POWER
                 self.already_jumped = True
@@ -156,7 +162,7 @@ class Player(object):
 
         # Fireball shoot and fast moving
         self.fast_moving = False
-        if core.keyShift:
+        if keyShift:
             self.fast_moving = True
             if self.powerLVL == 2:
                 if pg.time.get_ticks() > self.next_fireball_time:
@@ -164,7 +170,7 @@ class Player(object):
                         if len(core.get_map().projectiles) < 2:
                             self.shoot_fireball(core, self.rect.x, self.rect.y, self.direction)
 
-        if not (core.keyR or core.keyL):
+        if not (keyR or keyL):
             if self.x_vel > 0:
                 self.x_vel -= SPEED_DECREASE_RATE
             elif self.x_vel < 0:
@@ -179,7 +185,8 @@ class Player(object):
                         self.x_vel = MAX_MOVE_SPEED
             if self.x_vel < 0:
                 if self.fast_moving:
-                    if (-self.x_vel) > MAX_FASTMOVE_SPEED: self.x_vel = -MAX_FASTMOVE_SPEED
+                    if (-self.x_vel) > MAX_FASTMOVE_SPEED:
+                        self.x_vel = -MAX_FASTMOVE_SPEED
                 else:
                     if (-self.x_vel) > MAX_MOVE_SPEED:
                         self.x_vel = -MAX_MOVE_SPEED
@@ -192,25 +199,25 @@ class Player(object):
 
         if not self.on_ground:
             # Moving up, button is pressed
-            if (self.y_vel < 0 and core.keyU):
+            if (self.y_vel < 0 and keyU):
                 self.y_vel += GRAVITY
-                
+
             # Moving up, button is not pressed - low jump
-            elif (self.y_vel < 0 and not core.keyU):
+            elif (self.y_vel < 0 and not keyU):
                 self.y_vel += GRAVITY * LOW_JUMP_MULTIPLIER
-            
+
             # Moving down
             else:
                 self.y_vel += GRAVITY * FALL_MULTIPLIER
-            
+
             if self.y_vel > MAX_FALL_SPEED:
                 self.y_vel = MAX_FALL_SPEED
 
         blocks = core.get_map().get_blocks_for_collision(self.rect.x // 32, self.rect.y // 32)
-        
+
         self.pos_x += self.x_vel
         self.rect.x = self.pos_x
-        
+
         self.update_x_pos(blocks)
 
         self.rect.y += self.y_vel
@@ -244,10 +251,10 @@ class Player(object):
         else:
             self.image = self.sprites[image_id + self.powerLVL * 8 + 24]
 
-    def update_image(self, core):
+    def update_image(self, core, keyR, keyL, keyD, keyU, keyShift):
 
         self.spriteTick += 1
-        if (core.keyShift):
+        if (keyShift):
             self.spriteTick += 1
 
         if self.powerLVL in (0, 1, 2):
@@ -258,15 +265,15 @@ class Player(object):
 
             # Player is running
             elif (
-                    ((self.x_vel > 0 and core.keyR and not core.keyL) or
-                     (self.x_vel < 0 and core.keyL and not core.keyR)) or
-                    (self.x_vel > 0 and not (core.keyL or core.keyR)) or
-                    (self.x_vel < 0 and not (core.keyL or core.keyR))
+                    ((self.x_vel > 0 and keyR and not keyL) or
+                     (self.x_vel < 0 and keyL and not keyR)) or
+                    (self.x_vel > 0 and not (keyL or keyR)) or
+                    (self.x_vel < 0 and not (keyL or keyR))
             ):
-                             
+
                 if (self.spriteTick > 30):
                     self.spriteTick = 0
-                   
+
                 if self.spriteTick <= 10:
                     self.set_image(1)
                 elif 11 <= self.spriteTick <= 20:
@@ -278,7 +285,7 @@ class Player(object):
                     self.set_image(1)
 
             # Player decided to move in the another direction, but hasn't stopped yet
-            elif (self.x_vel > 0 and core.keyL and not core.keyR) or (self.x_vel < 0 and core.keyR and not core.keyL):
+            elif (self.x_vel > 0 and keyL and not keyR) or (self.x_vel < 0 and keyR and not keyL):
                 self.set_image(7)
                 self.spriteTick = 0
 

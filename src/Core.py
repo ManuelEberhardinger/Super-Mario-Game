@@ -8,7 +8,7 @@ from Map import Map
 from MenuManager import MenuManager
 from Sound import Sound
 
-from Next.Const import WINDOW_W, WINDOW_H
+from Const import WINDOW_W, WINDOW_H
 
 
 class Core(object):
@@ -17,6 +17,7 @@ class Core(object):
     Main class.
 
     """
+
     def __init__(self):
         environ['#'] = '1'
         pg.mixer.pre_init(44100, -16, 2, 1024)
@@ -81,6 +82,8 @@ class Core(object):
                     self.keyU = False
                 elif e.key == K_LSHIFT:
                     self.keyShift = False
+
+        self.get_map().store_action_sequence(self.keyR, self.keyL, self.keyD, self.keyU, self.keyShift)
 
     def input_menu(self):
         for e in pg.event.get():
